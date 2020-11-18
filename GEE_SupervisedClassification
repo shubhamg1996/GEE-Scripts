@@ -1,0 +1,75 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var l8raw = ee.ImageCollection("LANDSAT/LC08/C01/T1"),
+    region = /* color: #d63000 */ee.Geometry.Polygon(
+        [[[77.3101997758763, 13.130025349156174],
+          [77.3101997758763, 12.71106938408096],
+          [77.96251300829817, 12.71106938408096],
+          [77.96251300829817, 13.130025349156174]]], null, false),
+    training = ee.FeatureCollection("users/ujaval/ee101-india/training");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+Map.centerObject(training); 
+// Use a Landsat SimpleComposite as the input image.
+var image = ee.Algorithms.Landsat.simpleComposite({
+  collection: l8raw.filterDate('2017-01-01', '2017-12-31'),
+  asFloat: true
+});
+// Display the input composite.
+Map.addLayer(image, {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.3}, 'image');
+// Display the training data.
+Map.addLayer(training);
+// Use these bands for prediction.
+var bands = ['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B10'];
+// Overlay the point on the image to get training data.
+var training = image.select(bands).sampleRegions({
+  collection: training, 
+  properties: ['landcover'], 
+  scale: 30
+});
+// Train a CART classifier.
+var classifier = ee.Classifier.cart().train({
+  features: training, 
+  classProperty: 'landcover', 
+  inputProperties: bands
+});
+print(classifier.explain());
+// Classify the image.
+var classified = image.select(bands).classify(classifier);
+Map.addLayer(classified, {min: 0, max: 3, palette: ['gray', 'brown', 'blue', 'green']}, 'cart');
+// * Optional: Chart the area of each class in a region of interest.
+var areaChart = ui.Chart.image.byClass({
+  image: ee.Image.pixelArea().addBands(classified),
+  classBand: 'classification', 
+  region: region,
+  scale: 30,
+  reducer: ee.Reducer.sum(),
+  classLabels: ['urban', 'bare', 'water', 'vegetation']
+}).setOptions({
+  hAxis: {title: 'Classes'},
+  vAxis: {title: 'Area m^2'},
+  title: 'Area by class',
+  series: {
+    0: { color: 'gray' },
+    1: { color: 'brown' },
+    2: { color: 'blue' },
+    3: { color: 'green' }
+  }
+});
+print(areaChart);
+// * Optional: Accuracy assessment.
+// Add a column of random numbers to the training data.
+var withRandom = training.randomColumn();
+// Approximately 70% of the training data
+var trainingPartition = withRandom.filter(ee.Filter.lt('random', 0.7));
+// Approximately 30% of the training data
+var testingPartition = withRandom.filter(ee.Filter.gte('random', 0.7));
+// Train with 70% of the data.
+var trainedClassifier = ee.Classifier.cart().train({
+  features: trainingPartition, 
+  classProperty: 'landcover', 
+  inputProperties: bands
+});
+// Classify the test partition.
+var test = testingPartition.classify(trainedClassifier);
+// Print the confusion matrix.
+var confusionMatrix = test.errorMatrix('landcover', 'classification');
+print(confusionMatrix);
