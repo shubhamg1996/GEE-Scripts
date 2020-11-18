@@ -1,0 +1,35 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var image = ee.Image("UMD/hansen/global_forest_change_2013"),
+    geometry = /* color: #d63000 */ee.Geometry.MultiPoint(),
+    geometry2 = /* color: #0b4a8b */ee.Geometry.MultiPoint();
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+
+var haridwar =ee.Geometry.Polygon(
+[[74.86057483811129, 33.588189437450616], [74.6053770707, 33.4564137677], [74.6192312332, 33.4701984221], [74.6554929713, 33.4775446923], [74.6897018264, 33.4865446337], [74.701551093, 33.5002892601], [74.86057483811129, 33.588189437450616]]
+  );
+  var gfc2014 = ee.Image('UMD/hansen/global_forest_change_2015').clip(haridwar);
+  var tree  = gfc2014.select('treecover2000');
+  tree = tree.updateMask(tree.gt(0)).clip(haridwar);
+  var areaharidwar = ee.Image.pixelArea().addBands(tree);
+  
+  var reduction_resultsharidwar = areaharidwar.reduceRegion({
+    reducer: ee.Reducer.sum().group({
+    groupField: 1,
+    groupName: 'transition_class_value',
+  }),
+  geometry: haridwar,
+  scale: 30,
+  bestEffort: true,
+  });
+  
+  var dmeoharidwar = ee.List(reduction_resultsharidwar.get('groups'));
+  var sumharidwar=ee.Number(0);
+  var d_lengthharidwar = dmeoharidwar.size().getInfo();
+  
+  for(var i=0;i<d_lengthharidwar;i++){
+    // console.log(i);
+    var temp_objectharidwar=ee.Dictionary(dmeoharidwar.get(i));
+    var temp_object_sumharidwar=ee.Number(temp_objectharidwar.get('sum'));
+    sumharidwar=sumharidwar.add(temp_object_sumharidwar);
+  }
+print("Area of Forest in haridwar",sumharidwar.divide(1000000),"kmsq");
