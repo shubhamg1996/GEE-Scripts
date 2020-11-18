@@ -1,0 +1,17 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var image = ee.Image("JRC/GSW1_0/GlobalSurfaceWater"),
+    table = ee.FeatureCollection("users/proshubham1996/cityBoundaries");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+// Map.addLayer(image);
+print(image);
+// Map.addLayer(table);
+var bglr = table.filterMetadata('system:index','equals','00004d34bbd41c886e2f');
+Map.addLayer(bglr);
+Map.addLayer(image.clip(bglr));
+var blr_water = image.clip(bglr);
+var kml= blr_water.reduceToVectors(
+  {reducer:ee.Reducer.first(), geometry:bglr, scale:30}
+  );
+  Map.addLayer(kml,'','water_banglore');
+  Export.table.toDrive({collection:kml, description:'kml'}
+    );
