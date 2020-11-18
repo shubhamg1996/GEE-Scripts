@@ -1,0 +1,48 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var tg = ee.FeatureCollection("users/hashim6107/study_area_boundaryt");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var landsat = ee.ImageCollection("LANDSAT/LC08/C01/T1")
+    .filterDate('2016-01-01', '2017-01-01')
+    .filterBounds(tg)
+    var composite = ee.Algorithms.Landsat.simpleComposite({
+  collection: landsat,
+  asFloat: true
+})
+composite = composite.clip(tg)
+
+// Method 1
+var b5 = composite.select("B5")
+var b3 = composite.select("B3")
+var ndwi_1 = b5.subtract(b3).divide(b5.add(b3))
+var ndwi_2 = composite.normalizedDifference(["B5", "B4"])
+
+// Method 3)
+var ndwi_3 = composite.expression("(b5 - b3) / (b5 + b3)", {
+    b5: composite.select("B5"),
+    b3: composite.select("B3")
+})
+Map.addLayer(ndwi_1, {min:0, max:1} , "NDWI")
+Map.centerObject(tg, 11) 
+
+// NDWI over a collection
+var ndwi = landsat.map(function(image) {
+  var result = image.normalizedDifference(["B5", "B3"]).rename("ndwi")
+  return image.addBands(result);
+})
+
+print(ndwi)
+
+var maxNDWI = ndwi.max().clip(tg);
+print(maxNDWI)
+Map.addLayer(maxNDWI, {bands: "ndwi", min:0, max:0.4, palette:['blue', 'yellow']}, "Max-NDWI")
+Map.centerObject(tg, 11)
+
+// A chart of NDVI over time.
+print(ui.Chart.image.doySeries(ndwi.select('ndwi'), tg, ee.Reducer.mean(), 100))
+
+// Average Max NDVI for a whole region
+
+var rmaxNDWI = maxNDWI.reduceRegion({reducer:ee.Reducer.mean(),geometry: tg,scale: 30, maxPixels: 1e12});
+print(rmaxNDWI);
+
+Export.image.toDrive({image: maxNDWI.toFloat(),description:"NDWI",region:tg,scale:30});
