@@ -1,0 +1,287 @@
+Filter scripts...
+01 - Hello World
+Agarwood
+Agarwood Latest
+Area Haridwar
+Classification land 2018
+Final_ForestCoverAm
+FisheryProject
+Haridwar
+Jamia
+KorbaHamlets
+Landcover Classification
+Normalized Difference
+OBIA Advanced Summit
+Otsu method image segmentation
+Poverty
+Pverty 2
+TestSample
+UP Classification gun
+UntitledFile
+Up Classification Shubham
+WaterShed Excample
+Water_kml
+Waterupdated
+add ndvi band
+agarwood
+air quality
+air quality new
+area forest
+assignment tutorial
+canny
+cart classifier landcover
+crops fusion table
+dataset population example
+download Script
+hamlets
+hudroshed dataset
+imageDownloadURL
+kolkata
+korba
+landcover
+landcover shubham latest
+landsat image
+lulc
+mumbai
+my first
+ndvi
+ndwi study area
+object_methods
+pov
+saharanpur Hamlets
+snic cluster
+tensorflow script
+timeseries
+trees count
+trial
+trial1
+vci
+water
+water mark
+water sentinel 2
+GFW_First_View
+GFW_First_View_Amogh
+Master
+Master_Dhyey
+Master_Guneet
+Master_Shubham
+boatdensityfunction
+finalDatasetScript
+finalFishing
+Master_Shubham
+
+Use print(...) to write to this console.
+Revision history: Master_Shubham
+Mar 17 2019	proshubham1996	Updated Master_Shubham (added 1 line, deleted 1 line).	
+Mar 17 2019	proshubham1996	Updated Master_Shubham (added 4 lines, deleted 2 lines).	
+Mar 17 2019	proshubham1996	Updated Master_Shubham (added 7 lines, deleted 12 lines).	
+Mar 17 2019	proshubham1996	Updated Master_Shubham (added 5 lines, deleted 2 lines).	
+Mar 17 2019	proshubham1996	Updated Master_Shubham (added 1 line, deleted 1 line).	
+Mar 17 2019	proshubham1996	Updated Master_Shubham (added 9 lines, deleted 10 lines).	
+Mar 17 2019	proshubham1996	Updated Master_Shubham (added 1 line, deleted 2 lines).	
+Mar 17 2019	proshubham1996	Updated Master_Shubham (added 6 lines, deleted 5 lines).	
+Mar 17 2019	proshubham1996	Updated Master_Shubham (added 1 line, deleted 1 line).	
+Mar 16 2019	proshubham1996	Updated Master_Shubham (added 2 lines, deleted 6 lines).	
+Mar 16 2019	proshubham1996	Updated Master_Shubham (added 1 line, deleted 1 line).	
+Mar 16 2019	proshubham1996	Updated Master_Shubham (added 1 line, deleted 1 line).	
+Mar 16 2019	proshubham1996	Updated Master_Shubham (added 1 line, deleted 1 line).	
+Mar 16 2019	proshubham1996	Updated Master_Shubham (added 10 lines, deleted 10 lines).	
+Mar 16 2019	proshubham1996	Updated Master_Shubham (added 1 line, deleted 1 line).	
+Mar 16 2019	proshubham1996	Updated Master_Shubham (added 1 line, deleted 1 line).	
+Mar 16 2019	proshubham1996	Updated Master_Shubham (added 2 lines, deleted 2 lines).	
+Mar 16 2019	proshubham1996	Updated Master_Shubham (added 12 lines, deleted 4 lines).	
+Mar 16 2019	proshubham1996	Updated Master_Shubham (added 1 line, deleted 1 line).	
+Mar 16 2019	proshubham1996	Updated Master_Shubham (added 1 line, deleted 1 line).	
+Mar 16 2019	proshubham1996	Updated Master_Shubham (added 1 line, deleted 1 line).	
+Mar 16 2019	proshubham1996	Updated Master_Shubham (added 2 lines, deleted 2 lines).	
+Mar 16 2019	proshubham1996	Updated Master_Shubham (added 4 lines).	
+Mar 16 2019	proshubham1996	Updated Master_Shubham (added 1 line, deleted 1 line).	
+Mar 16 2019	proshubham1996	Updated Master_Shubham (added 1 line, deleted 1 line).	
+Mar 16 2019	proshubham1996	Updated Master_Shubham (added 1 line, deleted 2 lines).	
+Mar 16 2019	proshubham1996	Created Master_Shubham.	
+OK
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var MODIS_Terra = ee.ImageCollection("NASA/OCEANDATA/MODIS-Terra/L3SMI"),
+    MODIS_Aqua = ee.ImageCollection("NASA/OCEANDATA/MODIS-Aqua/L3SMI"),
+    SDA = /* color: #d63000 */ee.Geometry.Polygon(
+        [[[-7.319410613756872, 3.463263895440956],
+          [-5.952066429566116, 3.4577832538244855],
+          [-5.974115742024651, 4.821440900995657],
+          [-7.319324604757753, 4.8378550409824905]]]),
+        [[[76.96506476662432, 7.285127312727853],
+          [78.34101529350392, 7.27963789898316],
+          [78.31990638223101, 8.643312632266822],
+          [76.96404556814548, 8.659718090387976]]]),
+    imageVisParam = {"opacity":1,"bands":["fishing_condition_mean"],"min":0.06,"max":0.54,"palette":["ff7f62","ffa013","f1ff27","1aff0b"]},
+    SDA_FN = ee.FeatureCollection("users/dsaah/Fishing_Condition/fishnet01"),
+    GFW = ee.ImageCollection("GFW/GFF/V1/fishing_hours");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+//Shubham Gupta
+
+// Map.addLayer(SDA);
+Map.centerObject(SDA,7);
+//DEFINING THE SCOPE
+//--------------------------------------------------------------------------
+
+//TIME
+var startYear = 2002; 
+var endYear = 2018;
+var startYear = 2012; 
+var endYear = 2019;
+
+var startDate=ee.Date.fromYMD(startYear,01,01);
+var endDate=ee.Date.fromYMD(endYear+1,12,31);
+
+//SDA
+var StudyArea = SDA;
+print("Study area: ", StudyArea)
+print("Fishnet Study area: ", SDA_FN)
+Map.addLayer(SDA_FN, {}, "Fishnet")
+
+//DEFINE IMAGERY
+//---------------------------------------------------------------------------
+
+//Merge MODIS 
+var MT = MODIS_Terra.filterDate(startDate, endDate)
+                    .filterBounds(StudyArea)
+                    .select(['chlor_a', 'sst']);
+
+var MA = MODIS_Aqua.filterDate(startDate, endDate)
+                    .filterBounds(StudyArea)
+                    .select(['chlor_a', 'sst']);
+
+var MODIS = MT.merge(MA)
+              .sort('system:time_end');
+
+//BUILD FISING CONDITION INDEX
+//---------------------------------------------------------------------------
+
+var FishConCalc = function(img){
+  // fishing condistion thresholding based on Axbard, 2016
+  var sstThresh = img.select('sst').gte(26).and(
+                  img.select('sst').lte(30));
+  
+  var chlThresh = img.select('chlor_a').gte(0.38).and(
+                  img.select('chlor_a').lte(2.8));
+  var fishCon = sstThresh.and(chlThresh).rename('fishing_condition')
+  return img.addBands(fishCon)
+  var fishCon = sstThresh.and(chlThresh).rename('fishing_condition');
+  return img.addBands(fishCon);
+  
+}
+};
+
+var InputCollection = MODIS.map(FishConCalc);
+
+//ANALYSIS: Annual Monthly Averages
+//---------------------------------------------------------------------------
+
+var month_list = ee.List.sequence(1,12);
+var year_list = ee.List.sequence(startYear, endYear);
+
+var MODIS_ym =  ee.ImageCollection.fromImages(year_list.map(function (ynz){
+                                      return month_list.map(function(mnz){
+                                var img = InputCollection.filter(ee.Filter.calendarRange(ynz, ynz, 'year'))
+                                                       .filter(ee.Filter.calendarRange(mnz, mnz, 'month'))
+                                                       .mean();
+                                      return img.set('year', ynz)
+                                                .set('month', mnz)
+                                                .set('date', ee.Date.fromYMD(ynz,mnz,1))
+                                                .set('system:time_start',ee.Date.fromYMD(ynz,mnz,1))})
+                                                .set('system:time_start',ee.Date.fromYMD(ynz,mnz,1))});
+}).flatten());
+var GFW_ym =  ee.ImageCollection.fromImages(year_list.map(function (ynz){
+                                      return month_list.map(function(mnz){
+                                var img = GFW.filter(ee.Filter.calendarRange(ynz, ynz, 'year'))
+                                                       .filter(ee.Filter.calendarRange(mnz, mnz, 'month'))
+                                                       .median();
+                                      return img.set('year', ynz)
+                                                .set('month', mnz)
+                                                .set('date', ee.Date.fromYMD(ynz,mnz,1))
+                                                .set('system:time_start',ee.Date.fromYMD(ynz,mnz,1))});
+}).flatten());
+
+print(MODIS_ym);
+print(MODIS_ym.merge(GFW_ym));
+
+//CHART
+var MODIS_chart = ui.Chart.image.series({imageCollection: MODIS_ym,
+                                                  region:StudyArea, 
+                                                  reducer: ee.Reducer.mean(),
+                                                  scale: 500
+})
+                                  .setOptions({title: "SST and Chlor-A mean by month of the year for the period of interest",
+                                          pointSize: 3});
+
+print(MODIS_chart);
+
+//-by Region
+var MODIS_chart = ui.Chart.image.seriesByRegion({imageCollection: MODIS_ym.select('fishing_condition'),
+                                                  regions:StudyArea, 
+                                                  reducer: ee.Reducer.mean(),
+                                                  scale: 500,
+                                                  xProperty: 'system:time_start',
+                                                  seriesProperty: 'FZ_ID' 
+})
+                                  .setOptions({title: "Mean Fishing Condition by month of the year for the period of interest",
+                                           pointSize: 3});
+// var MODIS_chart = ui.Chart.image.seriesByRegion({imageCollection: MODIS_ym.select('fishing_condition'),
+//                                                   regions:StudyArea, 
+//                                                   reducer: ee.Reducer.mean(),
+//                                                   scale: 500,
+//                                                   xProperty: 'system:time_start',
+//                                                   seriesProperty: 'FZ_ID' 
+// })
+//                                   .setOptions({title: "Mean Fishing Condition by month of the year for the period of interest",
+//                                           pointSize: 3});
+
+//print(MODIS_chart);
+
+//ANALYSIS: Fishing Conditions
+//---------------------------------------------------------------------------
+var MODIS_FC =  MODIS_ym.select('fishing_condition')
+var MODIS_FC =  MODIS_ym.select('fishing_condition');
+
+//MAP
+var MODIS_FC_MEAN = MODIS_FC.select('fishing_condition')
+                            .reduce(ee.Reducer.mean())
+var MODIS_FC_MEAN = MODIS_FC.select('fishing_condition').reduce(ee.Reducer.mean());
+
+Map.addLayer(MODIS_FC_MEAN,imageVisParam,"Fishing Condition")
+
+
+//Map.addLayer(StudyArea, {color: '#26458d', fillColor: '#00000000'}, "Boundary");
+//Map.centerObject(StudyArea, 9);
+ 
+
+
+// Map.addLayer(MODIS_FC_MEAN,imageVisParam,"Fishing Condition");
+
+//MAP
+var fishing_condition_map = MODIS_ym.select('fishing_condition')
+                                   .reduce(ee.Reducer.mean())
+var fishing_condition_map = MODIS_ym.select('fishing_condition').reduce(ee.Reducer.mean());
+
+//Map.addLayer(fishing_condition_map,imageVisParam,"fishing condition",false)
+
+// export image to drive
+//Export.image.toAsset({
+//        image: fishing_condition_map,
+//        description: 'FISHING_CONDITIONvs1',
+//        scale: 500,
+//        region: StudyArea,
+//        maxPixels: 1e13
+//      });
+var gpwDay = GFW.filterMetadata('system:time_start', 'eq', startDate).mean();
+print(gpwDay)
+Map.addLayer(gpwDay,{},'DAy')
+Map.centerObject(gpwDay,5)
+// var gpwDay = GFW.filterMetadata('system:time_start', , startDate).mean();
+print(GFW_ym);
+
+// var ModiMonthComposite = MODIS_ym.reduce(ee.Reducer.mean());
+// Map.addLayer(ModiMonthComposite,)
+// print(ModiMonthComposite);
+var GFW_ym_MEAN = GFW_ym.select("drifting_longlines").reduce(ee.Reducer.mean());
+print(GFW_ym_MEAN)
+Map.addLayer(GFW_ym_MEAN,{},"GFW")
