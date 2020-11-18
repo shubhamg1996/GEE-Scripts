@@ -1,0 +1,149 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var s2 = ee.ImageCollection("COPERNICUS/S2"),
+    alos = ee.Image("JAXA/ALOS/AW3D30_V1_1"),
+    imageVisParam = {"opacity":0.68,"bands":["classification"],"min":1,"max":10,"palette":["3c6a00","249700","bbdc89","ffed71","ff0000","0013ff","b400ff","4cafaa","ff9b05","2d997f"]},
+    valparai = ee.FeatureCollection("users/mdm/valparai"),
+    vlp_table = ee.FeatureCollection("users/mdm/vlp_training_data"),
+    s1 = ee.ImageCollection("COPERNICUS/S1_GRD"),
+    s3 = ee.ImageCollection("COPERNICUS/S3/OLCI"),
+    noaaLand = ee.ImageCollection("NOAA/CDR/AVHRR/SR/V4"),
+    lai = ee.ImageCollection("NOAA/CDR/AVHRR/LAI_FAPAR/V4");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+// Data and script courtesy of M D Madhusudan mdm@ncf-india.org 
+// Let's take a look at the training data
+// Training data is divided into 8 distinct classes
+// -----------------------------
+// |Label| Landcover Type      |
+// |----------------------------
+// |1    | Closed Canopy Forest|
+// |2    | Open Canopy Forest  |
+// |3    | Tea                 |
+// |4    | Grassland           |
+// |5    | Built-up            |
+// |6    | Water               |
+// |9    | Bare/Rocky          |
+// |10   | Swamp               |
+// -----------------------------
+// We define a custom function to visualize the training data
+// ==== custom function to display training data====
+function showTrainingData(){
+  var lc_palette = ee.List(['3c6a00','249700','bbdc89','ffed71','ff0000','0013ff','ff9b05','2d997f']);
+  var lc_label = ee.List([1, 2, 3, 4, 5, 6, 9, 10]);
+  var lc_types = ee.List(["Closed Canopy Forest", "Open Canopy Forest", "Tea", "Grassland", "Built-up", "Water", "Bare/Rocky", "Swamp"]);
+  
+  var lc_trainingPoints = ee.FeatureCollection(
+    lc_label.map(function(habitat){
+      var colour = lc_palette.get(lc_label.indexOf(habitat));
+      return vlp_table.filterMetadata("label", "equals", habitat)
+                  .map(function(point){
+                    return point.set('style', {color: colour, pointShape: "diamond", pointSize: 3, width: 2, fillColor: "00000000"});
+                  });
+        })).flatten().aside(print);
+  
+  Map.addLayer(lc_trainingPoints.style({styleProperty:"style"}), {}, "LandCover Training Points");
+}
+showTrainingData() ;
+// Create Sentinel-2 Composite for the last year
+var s2 = s2.filterBounds(vlp_table)
+          .filterDate("2018-01-01", "2018-12-31")
+          .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 25))
+          .select("B.*")
+          .median();
+// The Sentinel-2 Median composite is the source image for this challenge
+// The challenge is to classify the image stored in the variable s2 into
+// 8 landcover classes as defined in the training data.
+// Visualise S2 median composite FCC
+Map.addLayer(s2.clip(valparai.geometry().bounds()), {bands: ['B4', 'B3', 'B2'], min: 600, max: 1500}, 'composite', true);
+// separate training data in training and validation fractions
+// You must use only the training fraction defined below when 
+// training your classifier.
+// Your implementation will be judged on how well it performs 
+// against the validation data.
+var vlp_table = vlp_table.randomColumn({seed: 123});
+var training = vlp_table.filter(ee.Filter.lt('random', 0.75));
+var validation = vlp_table.filter(ee.Filter.gte('random', 0.75));
+// ------------ DO NOT MODIFY ANYTHING ABOVE THIS LINE IN YOUR SUBMISSION --------
+// Below is a baseline classification algorithm
+// You will need to implement your own or tweak the below implementation
+// Create a function that computes and adds NDVI and MNDWI bands the S2 composite
+function addIndices(image){
+  var ndvi = image.normalizedDifference(['B8', 'B4']).rename(['ndvi']);
+  var mndwi = image.normalizedDifference(['B3', 'B11']).rename(['mndwi']);
+  return image.addBands(ndvi).addBands(mndwi);
+}
+// Apply function to add NDVI and MNDWI bands
+var s2 = addIndices(s2);
+// Create image with ALOS elevation and slope bands
+var alos = alos.select('AVE').rename('elev');
+var alos = alos.addBands(ee.Terrain.slope(alos), ['slope']);
+// Create a composite that adds elevation and slope data
+// Reproject to bring them all to one uniform scale and projection
+// before sampling training points
+// var dataset = ee.ImageCollection('MODIS/006/MOD09GQ').filterBounds(vlp_table)
+//                   .filter(ee.Filter.date('2018-01-01', '2018-12-31')).median(); 
+// var composite = s2.addBands(dataset);
+var data_sent1= s1.filterBounds(vlp_table)
+                  .filter(ee.Filter.date('2018-01-01', '2018-12-31')).mean(); 
+// var composite = s2.addBands(data_sent1);
+// var data_sent3= s3.filterBounds(vlp_table)
+//                   .filter(ee.Filter.date('2018-01-01', '2018-12-31')).mean(); 
+var data_land = noaaLand.filterBounds(vlp_table)
+                  .filter(ee.Filter.date('2018-01-01', '2018-12-31')).mean(); 
+var data_lai = lai.filterBounds(vlp_table)
+                  .filter(ee.Filter.date('2018-01-01', '2018-12-31')).median(); 
+var composite = s2.addBands(data_sent1).addBands(data_land).addBands(data_lai);
+print(composite.bandNames());
+// Map.addLayer(dataset.clip(valparai.geometry().bounds()));
+// var bands = ["B1","B2","B3","B4","B5","B6","B7","B8","B8A","ndvi","mndwi","elev","sur_refl_b01","sur_refl_b02"];
+var bands = ["B1","B2","B3","B4","B5","B7","SREFL_CH1","SREFL_CH2","LAI","FAPAR","SREFL_CH3","SZEN","BT_CH3","BT_CH4","B8","B8A","BT_CH5","ndvi","slope","mndwi","elev","VV","VH"];
+composite = composite.addBands(alos).reproject("EPSG:4326", null, 20);
+composite=composite.select(bands);
+print(composite.bandNames());
+// sample the composite image at every training point to obtain
+// values across every band and add to training data table
+var training = composite.sampleRegions({
+  collection: training,
+  properties: ['label'],
+  scale: 20,
+  tileScale: 16
+});
+// creates a classifier using the training data and based on the 
+// Random Forest algorithm
+var classifier = ee.Classifier.randomForest(40).train({features: training, 
+                    classProperty: 'label', 
+                    inputProperties: bands
+                  });
+// apply classifier on composite to create a classification map
+var classified = composite.classify(classifier);
+// Use classification map to assess accuracy using the holdout/validation fraction
+// of the overall training pool created above.
+var validation = composite.sampleRegions({
+  collection: validation,
+  properties: ['label'],
+  scale: 20,
+  tileScale: 16
+});
+// print(validation)
+var testConfusionMatrix = validation.classify(classifier)
+                                    .errorMatrix('label', 'classification');
+// Printing of confusion matrix may time out. Alternatively, you can export it as CSV
+print('Test Confusion Matrix', testConfusionMatrix);
+print('Test Accuracy', testConfusionMatrix.accuracy());
+// Export confusion matrix and accuracy as a CSV
+// We need to create a 'feature collection' to be able to use the Export tools.
+// The following code creates a feature with null geometries
+var accuracyAssessment = ee.FeatureCollection([ee.Feature(null,
+      {'confusionmatrix': testConfusionMatrix.array(),
+       'accuracy': testConfusionMatrix.accuracy()
+      })
+    ]);
+Export.table.toDrive({
+  collection: accuracyAssessment,
+  fileNamePrefix: 'accuracyAssessment',
+  fileFormat: 'CSV'
+});
+// visualise classified image
+Map.setOptions('SATELLITE');
+Map.centerObject(valparai.geometry().bounds(), 13);
+Map.addLayer(classified.clip(valparai.geometry().bounds()), imageVisParam, 'classified', true);
+// Map.addLayer(vlp_table.filter(ee.Filter.eq("label",4)));
